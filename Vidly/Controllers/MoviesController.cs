@@ -5,38 +5,41 @@ using System.Web;
 using System.Web.Mvc;
 using Vidly.Models;
 using Vidly.ViewModels;
+using System.Data.Entity;
 
 namespace Vidly.Controllers
 {
+    [RoutePrefix("movies")]
     public class MoviesController : Controller
     {
-        private RandomMovieViewModel vm = new RandomMovieViewModel()
+        private readonly ApplicationDbContext _context;
+        
+        public MoviesController()
         {
-            Movies = new List<Movie>
-            {
-                new Movie {Id = 1, Name = "Shrek"},
-                new Movie {Id = 2, Name = "Star Wars"}
-            },
-            ViewName = "Movies"
+            _context = new ApplicationDbContext();
+        }
 
-        };
+        protected override void Dispose(bool disposing)
+        {
+            _context.Dispose();
+        }
 
         //GET- movie details
+        //[Route("{id?}")]
         public ActionResult Details(int id)
         {
-            return View(vm.Movies.Find(x => x.Id == id));
+            var movies = _context.Movies.Include(m => m.GenreTypes).
+                SingleOrDefault(m => m.Id == id);
+            return View(movies);
+            
         }
-        // GET: Movies/Random
-        public ActionResult Random()
+        // GET: Movies/List
+        [Route]
+        public ActionResult Movies()
         {
-            return View(vm); //<- Passing data as argument to view
+            var movies = _context.Movies.Include(mbox=> mbox.GenreTypes).ToList();
+            return View(movies); //<- Passing data as argument to view
 
-           
-
-            //return Content("Hello World");
-            //return HttpNotFound();
-            //return new EmptyResult();
-            //return RedirectToAction("Index", "Home", new {page = 1, sortby = "name"});
         }
 
         public ActionResult Edit(int id)
